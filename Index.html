@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlanningPro — RDV Techniciens</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080a0f;--s1:#0f1218;--s2:#161b25;--s3:#1d2333;
+  --border:#1f2637;--border2:#2a3347;
+  --accent:#3d8bff;--adim:rgba(61,139,255,0.1);
+  --green:#00d68f;--gdim:rgba(0,214,143,0.1);
+  --orange:#ff8c42;--red:#ff4d6d;--rdim:rgba(255,77,109,0.1);
+  --yellow:#ffd166;--ydim:rgba(255,209,102,0.1);
+  --text:#e2e6f0;--text2:#8b95aa;--text3:#4a5568;--white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+
+/* LOGIN */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(61,139,255,.15),transparent 70%)}
+.lbox{width:100%;max-width:420px;background:var(–s1);border:1px solid var(–border2);border-radius:24px;padding:40px 36px;box-shadow:0 40px 80px rgba(0,0,0,.5)}
+.llogo{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+.llogo-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(–accent),#6c63ff);display:flex;align-items:center;justify-content:center;font-size:18px}
+.llogo-txt{font-size:20px;font-weight:800;color:var(–white)}.llogo-txt span{color:var(–accent)}
+.ltitle{font-size:24px;font-weight:700;color:var(–white);margin-bottom:6px}
+.lsub{font-size:14px;color:var(–text2);margin-bottom:28px}
+.lf{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.lf label{font-size:12px;font-weight:600;color:var(–text2);text-transform:uppercase;letter-spacing:.8px}
+.lf input{background:var(–s2);border:1px solid var(–border2);border-radius:12px;color:var(–text);font-family:‘Outfit’,sans-serif;font-size:15px;padding:12px 16px;outline:none;transition:border-color .2s,box-shadow .2s}
+.lf input:focus{border-color:var(–accent);box-shadow:0 0 0 3px var(–adim)}
+.lf input::placeholder{color:var(–text3)}
+.btn-login{width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(–accent),#6c63ff);color:#fff;font-family:‘Outfit’,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s}
+.btn-login:hover{opacity:.88}
+.lerr{background:var(–rdim);border:1px solid rgba(255,77,109,.3);border-radius:10px;padding:10px 14px;font-size:13px;color:var(–red);margin-top:14px;display:none}
+
+/* APP */
+#app{display:none;min-height:100vh;flex-direction:column}
+#app.on{display:flex}
+.topbar{height:58px;background:var(–s1);border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50}
+.tl{display:flex;align-items:center;gap:12px}
+.tlogo{font-size:17px;font-weight:800;color:var(–white)}.tlogo span{color:var(–accent)}
+.rbadge{background:var(–adim);border:1px solid rgba(61,139,255,.25);border-radius:6px;padding:2px 9px;font-size:11px;font-weight:600;color:var(–accent)}
+.bell{position:relative;cursor:pointer;font-size:18px;padding:4px;user-select:none}
+.bell-n{position:absolute;top:-2px;right:-4px;background:var(–red);color:#fff;border-radius:50%;width:17px;height:17px;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center}
+.bell-n.on{display:flex}
+.tr{display:flex;align-items:center;gap:12px}
+.tav{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(–accent),#6c63ff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.tname{font-size:13px;font-weight:600;color:var(–text2)}
+.btn-out{background:transparent;border:1px solid var(–border2);border-radius:8px;padding:5px 12px;font-size:12px;color:var(–text2);cursor:pointer;font-family:‘Outfit’,sans-serif;transition:all .15s}
+.btn-out:hover{border-color:var(–red);color:var(–red)}
+.content{flex:1;padding:28px 24px;max-width:1100px;margin:0 auto;width:100%}
+
+/* COMMON */
+.ptitle{font-size:26px;font-weight:800;color:var(–white);margin-bottom:4px}
+.psub{font-size:14px;color:var(–text2);margin-bottom:28px}
+.srow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px}
+.sc{background:var(–s1);border:1px solid var(–border);border-radius:16px;padding:20px}
+.sc-lbl{font-size:11px;font-weight:600;color:var(–text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.sc-val{font-size:30px;font-weight:800;line-height:1}
+.c-bl{color:var(–accent)}.c-gr{color:var(–green)}.c-or{color:var(–orange)}.c-rd{color:var(–red)}
+.tabs{display:flex;gap:4px;background:var(–s1);border:1px solid var(–border);border-radius:12px;padding:4px;margin-bottom:24px;width:fit-content;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;color:var(–text2);border:none;background:transparent;font-family:‘Outfit’,sans-serif;transition:all .15s;position:relative}
+.tab.on{background:var(–s3);color:var(–white)}
+.tab-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(–red);display:none}
+.tab-dot.on{display:block}
+.card{background:var(–s1);border:1px solid var(–border);border-radius:16px;overflow:hidden;margin-bottom:20px}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(–border)}
+.card-t{font-size:15px;font-weight:700;color:var(–white)}
+
+/* USER TABLE */
+.urow{display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1.3fr 1fr;align-items:center;padding:14px 20px;border-bottom:1px solid var(–border);gap:10px;transition:background .15s}
+.urow:last-child{border-bottom:none}.urow:hover{background:var(–s2)}
+.urow.hdr{background:var(–s2);font-size:11px;font-weight:600;color:var(–text2);text-transform:uppercase;letter-spacing:.8px}
+.urow.hdr:hover{background:var(–s2)}
+.uinfo{display:flex;align-items:center;gap:10px}
+.uav{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.av0{background:linear-gradient(135deg,#3d8bff,#6c63ff)}.av1{background:linear-gradient(135deg,#00d68f,#00a870)}
+.av2{background:linear-gradient(135deg,#ff8c42,#ff6b35)}.av3{background:linear-gradient(135deg,#ff4d6d,#c9184a)}
+.av4{background:linear-gradient(135deg,#9d4edd,#7b2d8b)}.av5{background:linear-gradient(135deg,#06d6a0,#118ab2)}
+.uname{font-size:14px;font-weight:600;color:var(–white)}
+.ulogin{font-size:11px;color:var(–text2);font-family:‘JetBrains Mono’,monospace}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600}
+.bgr{background:var(–gdim);color:var(–green);border:1px solid rgba(0,214,143,.2)}
+.bgy{background:rgba(139,149,170,.1);color:var(–text2);border:1px solid var(–border)}
+.brd{background:var(–rdim);color:var(–red);border:1px solid rgba(255,77,109,.2)}
+.byw{background:var(–ydim);color:var(–yellow);border:1px solid rgba(255,209,102,.2)}
+.bbl{background:var(–adim);color:var(–accent);border:1px solid rgba(61,139,255,.2)}
+.mono{font-family:‘JetBrains Mono’,monospace;font-size:12px;color:var(–text2)}
+.abtns{display:flex;gap:6px}
+.btic{background:transparent;border:1px solid var(–border);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:all .15s}
+.btic:hover{border-color:var(–red);color:var(–red)}.btic.ed:hover{border-color:var(–accent);color:var(–accent)}
+.addform{background:var(–s2);border:1px solid var(–border2);border-radius:16px;padding:22px;margin-bottom:20px;display:none}
+.addform.on{display:block}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.btnadd{background:var(–accent);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:‘Outfit’,sans-serif}
+.btnadd:hover{opacity:.85}
+
+/* LOG */
+.logrow{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(–border);font-size:13px}
+.logrow:last-child{border-bottom:none}
+.ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.lgr{background:var(–green)}.lbl{background:var(–accent)}.lrd{background:var(–red)}.lyw{background:var(–yellow)}
+.ltime{font-family:‘JetBrains Mono’,monospace;font-size:11px;color:var(–text2);min-width:115px}
+.ltxt{color:var(–text)}.ltxt strong{color:var(–white)}
+
+/* EXCEPTIONS */
+.exc{background:var(–s1);border:1px solid var(–border);border-radius:16px;padding:20px;margin-bottom:12px}
+.exc.pending{border-color:rgba(255,209,102,.35)}.exc.accepted{border-color:rgba(0,214,143,.35)}.exc.refused{border-color:rgba(255,77,109,.35)}
+.exc-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.exc-who{font-size:14px;font-weight:700;color:var(–white)}
+.exc-when{font-size:11px;color:var(–text2);font-family:‘JetBrains Mono’,monospace}
+.exc-block{background:var(–rdim);border:1px solid rgba(255,77,109,.2);border-radius:10px;padding:10px 14px;font-size:13px;color:var(–red);margin-bottom:12px}
+.exc-note{background:var(–s2);border-radius:10px;padding:10px 14px;font-size:13px;color:var(–text2);margin-bottom:12px}
+.exc-note strong{color:var(–text);display:block;margin-bottom:4px}
+.exc-qa{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.exc-qi{background:var(–s2);border-radius:8px;padding:8px 12px}
+.exc-qq{font-size:10px;color:var(–text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.exc-qa2{font-size:13px;font-weight:600;color:var(–text)}
+.exc-ta{width:100%;background:var(–s2);border:1px solid var(–border2);border-radius:10px;color:var(–text);font-family:‘Outfit’,sans-serif;font-size:13px;padding:10px 14px;outline:none;resize:vertical;min-height:70px;margin-bottom:10px}
+.exc-ta:focus{border-color:var(–accent)}
+.exc-acts{display:flex;gap:10px;flex-wrap:wrap}
+.btnacc{background:linear-gradient(135deg,var(–green),#00a870);border:none;color:#000;border-radius:10px;font-family:‘Outfit’,sans-serif;font-size:13px;font-weight:700;padding:9px 20px;cursor:pointer}
+.btnacc:hover{opacity:.85}
+.btnref{background:transparent;border:1px solid var(–red);color:var(–red);border-radius:10px;font-family:‘Outfit’,sans-serif;font-size:13px;font-weight:600;padding:9px 20px;cursor:pointer;transition:all .15s}
+.btnref:hover{background:var(–red);color:#fff}
+.exc-dec{border-radius:10px;padding:12px 16px;font-size:13px;margin-top:10px;line-height:1.6}
+.exc-dec.acc{background:var(–gdim);border:1px solid rgba(0,214,143,.2);color:var(–green)}
+.exc-dec.ref{background:var(–rdim);border:1px solid rgba(255,77,109,.2);color:var(–red)}
+
+/* QUESTIONNAIRE */
+#qv{max-width:640px;margin:0 auto}
+.qprog{height:4px;background:var(–border);border-radius:2px;margin-bottom:28px;overflow:hidden}
+.qpfill{height:100%;background:linear-gradient(90deg,var(–accent),var(–green));border-radius:2px;transition:width .4s}
+.qstep{animation:fu .3s ease}
+@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.qnum{font-size:12px;font-weight:700;color:var(–accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.qtitle{font-size:22px;font-weight:800;color:var(–white);margin-bottom:6px;line-height:1.3}
+.qhint{font-size:13px;color:var(–text2);margin-bottom:22px}
+.qopts{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.qopt{background:var(–s2);border:1.5px solid var(–border2);border-radius:14px;padding:14px 18px;cursor:pointer;transition:all .15s;font-size:15px;font-weight:500;color:var(–text);display:flex;align-items:center;gap:12px}
+.qopt:hover{border-color:var(–accent);color:var(–white);background:var(–adim)}
+.qopt.sel{border-color:var(–accent);background:var(–adim);color:var(–white)}
+.ochk{width:20px;height:20px;border-radius:50%;border:2px solid var(–border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s}
+.qopt.sel .ochk{background:var(–accent);border-color:var(–accent);color:#fff}
+.qinp{background:var(–s2);border:1.5px solid var(–border2);border-radius:14px;color:var(–text);font-family:‘Outfit’,sans-serif;font-size:15px;padding:14px 18px;outline:none;width:100%;margin-bottom:22px;transition:border-color .2s}
+.qinp:focus{border-color:var(–accent)}.qinp::placeholder{color:var(–text3)}
+.qnav{display:flex;gap:12px}
+.btnprev{background:transparent;border:1px solid var(–border2);color:var(–text2);border-radius:12px;font-family:‘Outfit’,sans-serif;font-size:14px;font-weight:600;padding:11px 20px;cursor:pointer;transition:all .15s}
+.btnprev:hover{border-color:var(–text);color:var(–text)}
+.btnnext{background:linear-gradient(135deg,var(–accent),#6c63ff);border:none;color:#fff;border-radius:12px;font-family:‘Outfit’,sans-serif;font-size:14px;font-weight:700;padding:11px 28px;cursor:pointer;flex:1;transition:opacity .15s}
+.btnnext:hover{opacity:.85}.btnnext:disabled{opacity:.35;cursor:not-allowed}
+
+/* BLOCKED */
+.blkbox{background:var(–rdim);border:1px solid rgba(255,77,109,.3);border-radius:20px;padding:32px;text-align:center;animation:fu .3s ease}
+.blkico{font-size:48px;margin-bottom:16px}
+.blktitle{font-size:22px;font-weight:800;color:var(–red);margin-bottom:8px}
+.blkreason{font-size:14px;color:var(–text2);margin-bottom:24px;line-height:1.6}
+.excreq{background:var(–s2);border:1px solid var(–border2);border-radius:14px;padding:20px;text-align:left;margin-bottom:14px}
+.excreq label{font-size:12px;font-weight:600;color:var(–text2);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:8px}
+.btnreq{background:linear-gradient(135deg,var(–orange),#e55a00);border:none;color:#fff;border-radius:12px;font-family:‘Outfit’,sans-serif;font-size:14px;font-weight:700;padding:12px 24px;cursor:pointer;width:100%;margin-bottom:10px;transition:opacity .15s}
+.btnreq:hover{opacity:.85}
+.btnrst{background:transparent;border:1px solid var(–border2);color:var(–text2);border-radius:12px;font-family:‘Outfit’,sans-serif;font-size:14px;font-weight:600;padding:11px 24px;cursor:pointer;width:100%;transition:all .15s}
+.btnrst:hover{border-color:var(–text);color:var(–text)}
+
+/* WAITING */
+.waitbox{background:var(–ydim);border:1px solid rgba(255,209,102,.3);border-radius:20px;padding:48px;text-align:center;animation:fu .3s ease}
+.waitic{font-size:48px;margin-bottom:16px}
+.waittitle{font-size:20px;font-weight:800;color:var(–yellow);margin-bottom:8px}
+.waitsub{font-size:14px;color:var(–text2);line-height:1.6}
+
+/* ELIGIBLE */
+.eligbox{background:var(–gdim);border:1px solid rgba(0,214,143,.3);border-radius:20px;padding:28px;text-align:center;margin-bottom:24px}
+.eligico{font-size:40px;margin-bottom:10px}
+.eligtitle{font-size:20px;font-weight:800;color:var(–green);margin-bottom:4px}
+.eligsub{font-size:13px;color:var(–text2)}
+
+/* SEARCH */
+.spanel{background:var(–s1);border:1px solid var(–border);border-radius:20px;padding:28px;margin-bottom:24px}
+.srow2{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.sf{display:flex;flex-direction:column;gap:7px;flex:1;min-width:130px}
+.sf label{font-size:11px;font-weight:600;color:var(–text2);text-transform:uppercase;letter-spacing:.8px}
+.sf input{background:var(–s2);border:1px solid var(–border2);border-radius:12px;color:var(–text);font-family:‘Outfit’,sans-serif;font-size:15px;padding:12px 14px;outline:none;transition:border-color .2s}
+.sf input:focus{border-color:var(–accent)}.sf input::placeholder{color:var(–text3)}
+.btnsrch{background:linear-gradient(135deg,var(–accent),#6c63ff);color:#fff;border:none;border-radius:12px;font-family:‘Outfit’,sans-serif;font-size:14px;font-weight:700;padding:12px 24px;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+.btnsrch:hover{opacity:.88}.btnsrch:disabled{opacity:.4;cursor:not-allowed}
+
+/* SLOTS */
+.dlbl{font-size:12px;font-weight:700;color:var(–text2);text-transform:uppercase;letter-spacing:1px;margin:20px 0 12px;display:flex;align-items:center;gap:8px}
+.dlbl::after{content:’’;flex:1;height:1px;background:var(–border)}
+.slotcard{background:var(–s1);border:1px solid var(–border);border-radius:16px;padding:20px;margin-bottom:10px;transition:border-color .2s,transform .15s}
+.slotcard:hover{border-color:rgba(61,139,255,.4);transform:translateX(4px)}
+.slottop{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.slottime{font-size:28px;font-weight:800;color:var(–white);line-height:1}
+.slotdlbl{font-size:11px;color:var(–text2);margin-top:3px}
+.slottech{background:var(–adim);border:1px solid rgba(61,139,255,.25);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;color:var(–accent)}
+.slotroute{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(–text2);margin-bottom:12px}
+.slotcity{color:var(–text);font-weight:600}
+.tpill{background:var(–s2);border:1px solid var(–border);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;font-family:‘JetBrains Mono’,monospace}
+.tpok{color:var(–green)}.tpwarn{color:var(–yellow)}
+.slotmeta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(–text2);border-top:1px solid var(–border);padding-top:12px}
+.btnval{background:transparent;border:1px solid var(–green);color:var(–green);border-radius:10px;font-family:‘Outfit’,sans-serif;font-size:13px;font-weight:700;padding:8px 18px;cursor:pointer;margin-top:12px;transition:all .15s}
+.btnval:hover{background:var(–green);color:#000}
+
+/* STATE */
+.statebox{text-align:center;padding:56px 20px;border:1px dashed var(–border);border-radius:20px;color:var(–text2)}
+.stateico{font-size:40px;margin-bottom:14px}
+.statetitle{font-size:16px;font-weight:700;color:var(–text);margin-bottom:6px}
+.loader{width:32px;height:32px;border:2px solid var(–border2);border-top-color:var(–accent);border-radius:50%;animation:rot .7s linear infinite;margin:0 auto 14px}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.mo.on{opacity:1;pointer-events:all}
+.mobox{background:var(–s1);border:1px solid var(–border2);border-radius:24px;padding:32px;width:100%;max-width:500px;transform:translateY(24px);transition:transform .25s;box-shadow:0 40px 80px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto}
+.mo.on .mobox{transform:translateY(0)}
+.motitle{font-size:20px;font-weight:800;color:var(–white);margin-bottom:6px}
+.mosub{font-size:13px;color:var(–text2);margin-bottom:20px}
+.mf{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.mf label{font-size:11px;font-weight:600;color:var(–text2);text-transform:uppercase;letter-spacing:.8px}
+.mf input,.mf textarea,.mf select{background:var(–s2);border:1px solid var(–border2);border-radius:12px;color:var(–text);font-family:‘Outfit’,sans-serif;font-size:14px;padding:11px 14px;outline:none;width:100%;transition:border-color .2s}
+.mf input:focus,.mf textarea:focus{border-color:var(–accent)}
+.mf input[readonly],.mf textarea[readonly]{opacity:.55;cursor:default}
+.mf textarea{resize:vertical;min-height:80px}
+.moacts{display:flex;gap:10px;margin-top:20px}
+.btnmcan{flex:1;background:transparent;border:1px solid var(–border2);color:var(–text2);border-radius:12px;font-family:‘Outfit’,sans-serif;font-size:14px;font-weight:600;padding:11px;cursor:pointer;transition:border-color .15s}
+.btnmcan:hover{border-color:var(–text2)}
+.btnmok{flex:2;background:linear-gradient(135deg,var(–green),#00a870);border:none;color:#000;border-radius:12px;font-family:‘Outfit’,sans-serif;font-size:14px;font-weight:800;padding:11px;cursor:pointer;transition:opacity .15s}
+.btnmok:hover{opacity:.85}.btnmok:disabled{opacity:.4;cursor:not-allowed}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(–s2);border:1px solid var(–green);border-radius:14px;padding:13px 24px;font-size:13px;font-weight:600;color:var(–green);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:500;white-space:nowrap;pointer-events:none}
+.toast.on{transform:translateX(-50%) translateY(0)}.toast.err{border-color:var(–red);color:var(–red)}
+
+@media(max-width:620px){
+.urow{grid-template-columns:1fr 1fr}.urow>*:nth-child(n+4){display:none}
+.fgrid{grid-template-columns:1fr}.content{padding:14px 12px}
+.exc-qa{grid-template-columns:1fr}.qtitle{font-size:18px}
+}
+</style>
+
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+
+<div id="loginScreen">
+  <div class="lbox">
+    <div class="llogo"><div class="llogo-icon">☀️</div><div class="llogo-txt">Planning<span>Pro</span></div></div>
+    <div class="ltitle">Connexion</div>
+    <div class="lsub">Accédez à votre espace de travail</div>
+    <div class="lf"><label>Identifiant</label><input id="lu" placeholder="votre.identifiant" autocomplete="username"></div>
+    <div class="lf"><label>Mot de passe</label><input type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">Se connecter →</button>
+    <div class="lerr" id="lerr">Identifiant ou mot de passe incorrect.</div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+
+<div id="app">
+  <div class="topbar">
+    <div class="tl">
+      <div class="tlogo">Planning<span>Pro</span></div>
+      <div class="rbadge" id="rbadge">—</div>
+      <div class="bell" id="bellBtn" onclick="handleBell()" title="Demandes d'exception en attente">🔔<div class="bell-n" id="bellN">0</div></div>
+    </div>
+    <div class="tr">
+      <div class="tav" id="tav">?</div>
+      <div class="tname" id="tname">—</div>
+      <button class="btn-out" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </div>
+  <div class="content" id="mc"></div>
+</div>
+
+<!-- ═══ CONFIRM MODAL ═══ -->
+
+<div class="mo" id="cModal">
+  <div class="mobox">
+    <div class="motitle">✅ Confirmer le RDV</div>
+    <div class="mosub">Ce RDV sera ajouté dans le Google Sheet planning.</div>
+    <div class="mf"><label>Nom du client</label><input id="mClient" placeholder="Nom Prénom"></div>
+    <div class="mf"><label>Heure du RDV</label><input id="mHeure" readonly></div>
+    <div class="mf"><label>Code postal</label><input id="mCP" readonly></div>
+    <div class="mf"><label>Ville</label><input id="mVille" readonly></div>
+    <div class="mf"><label>Technicien</label><input id="mTech" readonly></div>
+    <div class="mf"><label>Résumé questionnaire</label><textarea id="mElig" readonly rows="6"></textarea></div>
+    <div class="moacts">
+      <button class="btnmcan" onclick="closeMo()">Annuler</button>
+      <button class="btnmok" id="btnConfirm" onclick="confirmRDV()">Valider le RDV</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const SHEET_ID = '1tyw0ApYtGW2e3YHApVlAVZvuz9Q57F_iV8-J2ThjF9M';
+const MAPS_KEY = 'AIzaSyDpYX4NwE7mMbYW8ecHC23xhfCuL-OQKpI';
+const MAX_TRAVEL = 100; // minutes
+const VISIT = 105;      // minutes visite
+const DAY_START = 9*60+30;
+const DAY_END = 20*60+30;
+const SA_EMAIL = "planningbot@planning-bot-493022.iam.gserviceaccount.com";
+const SA_KEY = `-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCwaDGBjAUJ+sQc
+5oawLjMBaq91oOAFIxnASF+2k02cbsdGNtXDn08svhjgkN7+SwQetFTYIDlQ0XNv
+kZ3glHLqe+wI9RcISUCuHJxjGu3rOLnP3Pc+/St1p/JBpMHjIlhK+gTkdjHU4MWq
+poqdgNGDqIaFAxCF12cIoUaNvV5cowW8zWKxFjnOGkvS58MhQNmh8jxeCahEJg5H
+y4NJ5uX30WNlh6gcJdzFTWz+Z9iJbh0dQBDkbA3mFfhEpTd6GQvBt3IkTMU9Xrl4
+LW43IAx5wHmzUel94mMtlilBcKsG4DGDSMZ/0aw3h7taBYx6x+P7246B7h//8xs3
+WePey04lAgMBAAECggEAIkIVzSX7S4kYwVEOepP6QU3t5a7Ymn7KzzHu7oa0RYso
+5WycPlmHl3WSYLgZqjI4ylq0eGVnpBeM7q+NhLHnkDyBJess7iXFqxpwz3lJF4tk
+YGb12BRz9m0naZKcuaavlV3xCcofWstM79tYY4aDCam2eAnUkV13y7AAQuHx+5S1
+mW3AyMaobi3VX65cxqoYjLwZO2KQpus78wCrfXiCJrJI7/shTAGrr9korHaMcqbw
+mWYVff8T1n/kUiQqxBB4MLV1BGAJqpThIORA0fDq7L1sSM0SxdmrnyZIPj2igOD2
+4Wp220kOj7VF2T2a0wsfoNEnhDyLeqRTNXUqV9ouMQKBgQDdpHrJRt1QKtNGbcDs
+ZdcVYI+SyK+tC2fD8xDZIzgnv+5vYDaHaXyCDw9TYh3zHnu4XihoEy+Fqb9pxfIs
+AMTEeFy9CF5E/ZsBK4/5t1JZjLU4XsjfWSZaJGCAGKjI7WaLlQJZgWHFIBw2JTl0
+XkdP5AFPtMxbNvjsnYl84HPstQKBgQDLwJ37xLKcNgQihoBkxhtC2nPQyqS4atND
+HskBnYsNgT1eki+qv/KcoZQF4Dr5HugroAHP/QTWxUBt8HDrvSuKthByJFAs33Dv
+aX8fmlMR08IfwoscIyWJFRQ5DoOR7wEjV0eutReMcOMF/jFdC4/gg4I9CyIQ6f0j
+Bj4rkL4xsQKBgQCjsj4peBguhGKkSp1JO3IeTMHdRDFTme/abiQMaxGncf7U7Xd4
+jXUyzZKhH/9Et0fjBE/NhhX8H0HLCjJxQ2QQQ2EjEBIn3DJmK9lbMoU0tFKHvqGX
+K83Cl8lZ8lx+ga/R+YzRtFgUckHDz7xecN80Zw584uhnmfNBNpz7yP51XQKBgQCq
+/XfXrQfTjoVD0Cp558NDBH9DTnyUA5pN7szzXRov+DDfZ8E3A6UAC51knPwAyw4+
+ZiZ/PLBN6PWcDbdGLtgWrZn5oD3kmpN1Z8x2YhWqlVKJQsNplplOhHEXPPXvh2sm
+FH4kwPcFNktfYSZeFnDlEpg+0FQDa8qzFO8hsnPa0QKBgFv0pCOexGFDd6YQG2g/
+3CgwwJmHo3lqrpEG83ljzUej1BfRURziWLV7FwIls+4VIzBbxQ5AEvwqEQdyHt3l
+0BExnSoLKoeqUevJ7c1OQE3k5XwSIIgt8xhfXlxKoFuu++68qBRYAkuTTx7tkVza
+jHGWgyM0HlNG59EjTOiN8uk6
+-----END PRIVATE KEY-----`;
+
+// ═══════════════════════════════════════════
+// QUESTIONS ELIGIBILITÉ
+// ═══════════════════════════════════════════
+const QS = [
+  {id:'proprio',label:'Êtes-vous propriétaire de votre logement ?',hint:'Seuls les propriétaires sont éligibles à nos offres.',type:'choice',opts:['Oui','Non'],block:v=>v==='Non'?'Le prospect doit être propriétaire pour être éligible.':null},
+  {id:'age',label:'Quel est votre âge ?',hint:'Si +76 ans et célibataire, le dossier est bloqué.',type:'input',itype:'number',ph:'Ex: 52'},
+  {id:'sitfam',label:'Quelle est votre situation familiale ?',type:'choice',opts:['Célibataire','Marié(e)','Pacsé(e)','Divorcé(e)','Veuf/Veuve'],block:(v,a)=>{const age=parseInt(a.age||0);if(age>76&&['Célibataire','Divorcé(e)','Veuf/Veuve'].includes(v))return'Plus de 76 ans et sans conjoint(e). Dossier non éligible.';return null}},
+  {id:'ageconj',label:"Quel est l'âge de votre conjoint(e) ?",type:'input',itype:'number',ph:'Ex: 48',showIf:a=>['Marié(e)','Pacsé(e)'].includes(a.sitfam)},
+  {id:'surface',label:'Quelle est la surface habitable de votre logement ?',type:'input',ph:'Ex: 120 m²'},
+  {id:'chauffage',label:'Quel est votre mode de chauffage actuel ?',hint:'Fioul et gaz sont prioritaires pour nos solutions.',type:'choice',opts:['Fioul ⭐','Gaz ⭐','Électrique','Pompe à chaleur','Autre']},
+  {id:'conso',label:'Quelle est votre consommation électrique mensuelle ?',hint:'En dessous de 50€/mois, le dossier est non éligible.',type:'input',itype:'number',ph:'Montant en €/mois',block:v=>parseInt(v)<50?'Consommation électrique inférieure à 50€/mois. Dossier non éligible.':null},
+  {id:'phase',label:'Êtes-vous en monophasé ou triphasé ?',type:'choice',opts:['Monophasé','Triphasé','Je ne sais pas']},
+  {id:'photov',label:'Avez-vous déjà une installation photovoltaïque ?',type:'choice',opts:['Non','Oui – Autoconsommation','Oui – Revente totale']},
+  {id:'zone',label:'Êtes-vous dans une zone classée ?',hint:'Zone protégée, monument historique, etc.',type:'choice',opts:['Non','Oui','Je ne sais pas']},
+  {id:'sitpro',label:'Quelle est votre situation professionnelle ?',type:'choice',opts:['CDI','CDD','Artisan / Profession libérale',"Chef d'entreprise",'Auto-entrepreneur','Demandeur d\'emploi','Intérim','Retraité'],block:v=>['Demandeur d\'emploi','Intérim'].includes(v)?'Situation professionnelle incompatible avec le financement.':null},
+  {id:'revenus',label:'Quels sont vos revenus mensuels nets ?',hint:'Incluez les revenus fonciers si applicable.',type:'input',ph:'Ex: 2500€ + 300€ fonciers'},
+  {id:'sitproconj',label:'Situation professionnelle du/de la conjoint(e) ?',type:'choice',opts:['CDI','CDD','Artisan / Profession libérale',"Chef d'entreprise",'Auto-entrepreneur','Retraité','Sans emploi','N/A'],showIf:a=>['Marié(e)','Pacsé(e)'].includes(a.sitfam)},
+  {id:'revconj',label:'Revenus mensuels du/de la conjoint(e) ?',type:'input',ph:'Ex: 2000€',showIf:a=>['Marié(e)','Pacsé(e)'].includes(a.sitfam)},
+  {id:'enfants',label:"Combien d'enfants avez-vous à charge ?",type:'choice',opts:['0','1','2','3','4 ou plus']},
+  {id:'credits',label:'Avez-vous des crédits en cours ?',hint:'Immobilier, voiture, consommation, pension alimentaire…',type:'input',ph:'Ex: Crédit immo 800€/mois, voiture 200€/mois'},
+  {id:'propriodepuis',label:'Depuis combien de temps êtes-vous propriétaire ?',type:'input',ph:'Ex: 5 ans'},
+  {id:'interet',label:'Quel est le centre d\'intérêt du client ?',hint:'Économies, indépendance, revente, écologie…',type:'input',ph:'Notes libres…'}
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let CU=null, QA={}, QSTEPS=[], QIDX=0, SLOT=null, SCACHE=null, POLL=null, EXCID=null;
+
+// ═══════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════
+function getUsers(){
+  const r=localStorage.getItem('pp_u');
+  if(r)return JSON.parse(r);
+  const d=[
+    {id:1,name:'Administrateur',login:'admin',pass:'Admin2024!',role:'admin',av:0,rdv:0,lastLogin:null,active:true},
+    {id:2,name:'Téléprospecteur 1',login:'telepro1',pass:'Telepro123',role:'user',av:1,rdv:0,lastLogin:null,active:true}
+  ];
+  saveUsers(d);return d;
+}
+function saveUsers(u){localStorage.setItem('pp_u',JSON.stringify(u))}
+function getLog(){const r=localStorage.getItem('pp_log');return r?JSON.parse(r):[]}
+function addLog(e){const l=getLog();l.unshift({...e,t:new Date().toISOString()});if(l.length>300)l.pop();localStorage.setItem('pp_log',JSON.stringify(l))}
+function getExcs(){const r=localStorage.getItem('pp_exc');return r?JSON.parse(r):[]}
+function saveExcs(e){localStorage.setItem('pp_exc',JSON.stringify(e))}
+function pendingCount(){return getExcs().filter(e=>e.status==='pending').length}
+function updBell(){const n=pendingCount();const el=document.getElementById('bellN');if(el){el.textContent=n;el.classList.toggle('on',n>0)}}
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+function doLogin(){
+  const login=document.getElementById('lu').value.trim();
+  const pass=document.getElementById('lp').value;
+  const users=getUsers();
+  const user=users.find(u=>u.login===login&&u.pass===pass&&u.active);
+  if(!user){document.getElementById('lerr').style.display='block';return}
+  users.find(u=>u.id===user.id).lastLogin=new Date().toISOString();
+  saveUsers(users);
+  addLog({type:'login',uid:user.id,user:user.name,txt:`<strong>${user.name}</strong> s'est connecté(e)`});
+  CU={...user};
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').classList.add('on');
+  document.getElementById('tname').textContent=user.name;
+  document.getElementById('rbadge').textContent=user.role==='admin'?'⚡ Admin':'👤 Téléprospecteur';
+  document.getElementById('tav').textContent=user.name[0].toUpperCase();
+  updBell();
+  if(user.role==='admin'){
+    POLL=setInterval(()=>{updBell()},4000);
+    renderAdmin();
+  } else {
+    POLL=setInterval(checkMyExc,4000);
+    startQ();
+  }
+}
+function doLogout(){
+  clearInterval(POLL);CU=null;QA={};QIDX=0;SLOT=null;SCACHE=null;EXCID=null;
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('lu').value='';document.getElementById('lp').value='';
+  document.getElementById('lerr').style.display='none';
+}
+function handleBell(){if(CU?.role==='admin')renderAdmin('exc')}
+
+// ═══════════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════════
+function renderAdmin(tab='users'){
+  const users=getUsers(),excs=getExcs(),log=getLog();
+  const totalRdv=users.filter(u=>u.role==='user').reduce((s,u)=>s+u.rdv,0);
+  const pend=pendingCount();
+  document.getElementById('mc').innerHTML=`
+    <div class="ptitle">Tableau de bord Admin</div>
+    <div class="psub">Gestion des comptes, exceptions et activité en temps réel</div>
+    <div class="srow">
+      <div class="sc"><div class="sc-lbl">Téléprospecteurs</div><div class="sc-val c-bl">${users.filter(u=>u.active&&u.role==='user').length}</div></div>
+      <div class="sc"><div class="sc-lbl">RDV validés</div><div class="sc-val c-gr">${totalRdv}</div></div>
+      <div class="sc"><div class="sc-lbl">Exceptions en attente</div><div class="sc-val c-rd">${pend}</div></div>
+      <div class="sc"><div class="sc-lbl">Exceptions totales</div><div class="sc-val c-or">${excs.length}</div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab ${tab==='users'?'on':''}" onclick="renderAdmin('users')">👥 Utilisateurs</button>
+      <button class="tab ${tab==='exc'?'on':''}" onclick="renderAdmin('exc')">⚠️ Exceptions<div class="tab-dot ${pend>0?'on':''}"></div></button>
+      <button class="tab ${tab==='log'?'on':''}" onclick="renderAdmin('log')">📋 Activité</button>
+    </div>
+    <div id="atab">${tab==='users'?tabUsers(users):tab==='exc'?tabExc(excs,users):tabLog(log)}</div>`;
+}
+
+function tabUsers(users){
+  const rows=users.map(u=>`
+    <div class="urow">
+      <div class="uinfo"><div class="uav av${u.av%6}">${u.name[0]}</div><div><div class="uname">${u.name}</div><div class="ulogin">${u.login}</div></div></div>
+      <div class="mono" style="color:var(--yellow)">${u.pass}</div>
+      <div><span class="badge ${u.active?'bgr':'bgy'}">${u.active?'● Actif':'○ Inactif'}</span></div>
+      <div style="color:var(--green);font-weight:700">${u.rdv} RDV</div>
+      <div class="mono" style="font-size:11px">${u.lastLogin?new Date(u.lastLogin).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'}</div>
+      <div class="abtns">${u.role!=='admin'?`<button class="btic ed" onclick="editU(${u.id})" title="Modifier">✏️</button><button class="btic" onclick="delU(${u.id})" title="Supprimer">🗑️</button>`:''}</div>
+    </div>`).join('');
+  return`
+    <div class="addform" id="addform">
+      <div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px">Nouveau compte</div>
+      <div class="fgrid">
+        <div class="mf"><label>Prénom Nom</label><input id="nName" placeholder="Sophie Martin"></div>
+        <div class="mf"><label>Identifiant</label><input id="nLogin" placeholder="sophie.m"></div>
+        <div class="mf"><label>Mot de passe</label><input id="nPass" placeholder="Min. 6 caractères"></div>
+        <div class="mf"><label>Rôle</label><select id="nRole"><option value="user">Téléprospecteur</option><option value="admin">Administrateur</option></select></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btnmcan" style="flex:1" onclick="document.getElementById('addform').classList.remove('on')">Annuler</button>
+        <button class="btnmok" style="flex:2" onclick="saveNewU()">Créer le compte</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">Comptes (${users.length})</div><button class="btnadd" onclick="document.getElementById('addform').classList.toggle('on')">+ Ajouter</button></div>
+      <div class="urow hdr"><div>Utilisateur</div><div>Mot de passe</div><div>Statut</div><div>RDV</div><div>Dernière connexion</div><div>Actions</div></div>
+      ${rows}
+    </div>`;
+}
+
+function tabExc(excs,users){
+  if(!excs.length)return`<div class="statebox"><div class="stateico">✅</div><div class="statetitle">Aucune demande d'exception</div></div>`;
+  const sorted=[...excs].sort((a,b)=>{const o={pending:0,accepted:1,refused:2};return(o[a.status]-o[b.status])||new Date(b.createdAt)-new Date(a.createdAt)});
+  return sorted.map(e=>{
+    const u=users.find(u=>u.id===e.uid)||{name:'Inconnu'};
+    const sbadge=e.status==='pending'?'<span class="badge byw">⏳ En attente</span>':e.status==='accepted'?'<span class="badge bgr">✅ Acceptée</span>':'<span class="badge brd">❌ Refusée</span>';
+    const qa=Object.entries(e.answers).map(([k,v])=>{const q=QS.find(q=>q.id===k);return q?`<div class="exc-qi"><div class="exc-qq">${q.label.substring(0,35)}…</div><div class="exc-qa2">${v}</div></div>`:''}).join('');
+    const dec=e.status!=='pending'?`<div class="exc-dec ${e.status==='accepted'?'acc':'ref'}"><strong>${e.status==='accepted'?'✅ Acceptée':'❌ Refusée'} — Justification admin :</strong><br>${e.adminNote||'—'}<br><small style="opacity:.6">${new Date(e.decidedAt).toLocaleString('fr-FR')}</small></div>`:'';
+    const acts=e.status==='pending'?`
+      <div style="width:100%;margin-top:14px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:8px">Votre justification (obligatoire)</label>
+        <textarea class="exc-ta" id="an_${e.id}" placeholder="Ex: Le mari a 45 ans en CDI, le projet est viable financièrement. J'accepte l'exception car…"></textarea>
+
+```
+    <div class="exc-acts">
+      <button class="btnacc" onclick="decide('${e.id}','accepted')">✅ Accepter l'exception</button>
+      <button class="btnref" onclick="decide('${e.id}','refused')">❌ Refuser</button>
+    </div>
+  </div>`:'';
+return`
+  <div class="exc ${e.status}">
+    <div class="exc-top"><div><div class="exc-who">👤 ${u.name}</div><div class="exc-when">${new Date(e.createdAt).toLocaleString('fr-FR')}</div></div>${sbadge}</div>
+    <div class="exc-block">🚫 Raison du blocage : ${e.blockReason}</div>
+    <div class="exc-note"><strong>Note du téléprospecteur :</strong>${e.userNote||'—'}</div>
+    <div class="exc-qa">${qa}</div>
+    ${dec}${acts}
+  </div>`;
+```
+
+}).join(’’);
+}
+
+function tabLog(log){
+if(!log.length)return`<div class="statebox"><div class="stateico">📋</div><div class="statetitle">Aucune activité</div></div>`;
+return`<div class="card">${log.slice(0,60).map(e=>`
+<div class="logrow">
+<div class="ldot ${e.type==='rdv'?'lgr':e.type==='exc'?'lrd':e.type==='login'?'lbl':'lyw'}"></div>
+<div class="ltime">${new Date(e.t).toLocaleString(‘fr-FR’,{day:‘2-digit’,month:‘2-digit’,hour:‘2-digit’,minute:‘2-digit’})}</div>
+<div class="ltxt">${e.txt}</div>
+</div>`).join('')}</div>`;
+}
+
+function saveNewU(){
+const name=document.getElementById(‘nName’).value.trim();
+const login=document.getElementById(‘nLogin’).value.trim();
+const pass=document.getElementById(‘nPass’).value;
+const role=document.getElementById(‘nRole’).value;
+if(!name||!login||pass.length<6){toast(‘Remplissez tous les champs (mdp ≥ 6 caractères)’,true);return}
+const users=getUsers();
+if(users.find(u=>u.login===login)){toast(‘Identifiant déjà utilisé’,true);return}
+users.push({id:Date.now(),name,login,pass,role,av:users.length%6,rdv:0,lastLogin:null,active:true});
+saveUsers(users);
+addLog({type:‘admin’,user:CU.name,txt:`<strong>${CU.name}</strong> a créé le compte <strong>${name}</strong>`});
+toast(`Compte ${name} créé !`);renderAdmin(‘users’);
+}
+function delU(id){
+if(!confirm(‘Supprimer cet utilisateur ?’))return;
+saveUsers(getUsers().filter(u=>u.id!==id));
+toast(‘Utilisateur supprimé’);renderAdmin(‘users’);
+}
+function editU(id){
+const users=getUsers();const u=users.find(u=>u.id===id);if(!u)return;
+const np=prompt(`Nouveau mot de passe pour ${u.name} (vide = inchangé) :`, ‘’);
+if(np===null)return;
+if(np.length>0&&np.length<6){alert(‘Minimum 6 caractères’);return}
+if(np.length>=6)u.pass=np;
+const nn=prompt(‘Nouveau nom :’, u.name);
+if(nn&&nn.trim())u.name=nn.trim();
+saveUsers(users);toast(‘Compte mis à jour’);renderAdmin(‘users’);
+}
+function decide(id,dec){
+const note=document.getElementById(`an_${id}`)?.value.trim();
+if(!note){toast(‘Saisissez une justification’,true);return}
+const excs=getExcs();const idx=excs.findIndex(e=>e.id===id);if(idx<0)return;
+excs[idx].status=dec;excs[idx].adminNote=note;excs[idx].decidedAt=new Date().toISOString();
+saveExcs(excs);
+const verb=dec===‘accepted’?‘accepté’:‘refusé’;
+addLog({type:‘exc’,user:CU.name,txt:`<strong>${CU.name}</strong> a ${verb} l'exception de <strong>${excs[idx].userName}</strong> — "${note}"`});
+toast(dec===‘accepted’?‘Exception acceptée ✅’:‘Exception refusée’);
+updBell();renderAdmin(‘exc’);
+}
+
+// ═══════════════════════════════════════════
+// QUESTIONNAIRE
+// ═══════════════════════════════════════════
+function startQ(){QA={};QIDX=0;EXCID=null;buildSteps();renderQ()}
+function buildSteps(){QSTEPS=QS.filter(q=>!q.showIf||q.showIf(QA))}
+
+function renderQ(){
+buildSteps();
+if(QIDX>=QSTEPS.length){showElig();return}
+const q=QSTEPS[QIDX];
+const pct=Math.round((QIDX/QSTEPS.length)*100);
+let body=’’;
+if(q.type===‘choice’){
+body=`<div class="qopts">${q.opts.map(o=>`
+<div class=“qopt ${QA[q.id]===o?‘sel’:’’}” onclick=“selOpt(this,’${q.id}’,’${o.replace(/’/g,”\’”)}’)”>
+<div class="ochk">${QA[q.id]===o?‘✓’:’’}</div>${o}
+</div>`).join('')}</div>`;
+} else {
+body=`<input class="qinp" type="${q.itype||'text'}" id="qinp" placeholder="${q.ph||''}" value="${QA[q.id]||''}" oninput="QA['${q.id}']=this.value">`;
+}
+document.getElementById(‘mc’).innerHTML=` <div id="qv"> <div style="display:flex;justify-content:space-between;margin-bottom:8px"> <span style="font-size:12px;color:var(--text2)">${QIDX+1} / ${QSTEPS.length}</span> <span style="font-size:12px;color:var(--text2)">${pct}% complété</span> </div> <div class="qprog"><div class="qpfill" style="width:${pct}%"></div></div> <div class="qstep"> <div class="qnum">Question ${QIDX+1}</div> <div class="qtitle">${q.label}</div> ${q.hint?`<div class="qhint">💡 ${q.hint}</div>`:''} ${body} <div class="qnav"> ${QIDX>0?`<button class="btnprev" onclick="qPrev()">← Précédent</button>`:''} <button class="btnnext" onclick="qNext()">${QIDX===QSTEPS.length-1?'Terminer ✓':'Suivant →'}</button> </div> </div> </div>`;
+}
+
+function selOpt(el,id,val){
+QA[id]=val;
+document.querySelectorAll(’.qopt’).forEach(o=>{o.classList.remove(‘sel’);o.querySelector(’.ochk’).textContent=’’});
+el.classList.add(‘sel’);el.querySelector(’.ochk’).textContent=‘✓’;
+}
+function qNext(){
+const q=QSTEPS[QIDX];
+if(!QA[q.id]||String(QA[q.id]).trim()===’’){toast(‘Veuillez répondre à cette question’,true);return}
+const blk=q.block?q.block(QA[q.id],QA):null;
+if(blk){showBlocked(blk);return}
+QIDX++;buildSteps();
+if(QIDX>=QSTEPS.length)showElig();else renderQ();
+}
+function qPrev(){if(QIDX>0){QIDX–;renderQ()}}
+
+function showBlocked(reason){
+document.getElementById(‘mc’).innerHTML=` <div id="qv"> <div class="blkbox"> <div class="blkico">🚫</div> <div class="blktitle">Dossier non éligible</div> <div class="blkreason">${reason}</div> <div class="excreq"> <label>Expliquez pourquoi vous demandez une exception</label> <textarea class="qinp" id="excNote" placeholder="Ex: Le mari a 45 ans en CDI, la femme a 78 ans mais le projet est financièrement viable car…" style="margin-bottom:12px;height:100px"></textarea> <button class="btnreq" onclick="reqExc('${reason.replace(/'/g,"\\'")}')">📨 Demander une exception à l'admin</button> </div> <button class="btnrst" onclick="startQ()">↩ Recommencer avec un nouveau prospect</button> </div> </div>`;
+}
+
+function reqExc(reason){
+const note=document.getElementById(‘excNote’).value.trim();
+if(!note){toast(“Expliquez le contexte de l’exception”,true);return}
+const excs=getExcs();
+const id=‘exc_’+Date.now();
+excs.push({id,uid:CU.id,userName:CU.name,blockReason:reason,userNote:note,answers:{…QA},status:‘pending’,createdAt:new Date().toISOString(),adminNote:null,decidedAt:null});
+saveExcs(excs);
+addLog({type:‘exc’,uid:CU.id,user:CU.name,txt:`<strong>${CU.name}</strong> demande une exception — ${reason}`});
+updBell();EXCID=id;showWait();
+}
+
+function showWait(){
+document.getElementById(‘mc’).innerHTML=` <div id="qv"> <div class="waitbox"> <div class="waitic">⏳</div> <div class="waittitle">Demande envoyée à l'administrateur</div> <div class="waitsub">L'admin examine votre dossier et les réponses au questionnaire.<br>Cette page se met à jour automatiquement toutes les 4 secondes.<br><br><span style="color:var(--text3);font-size:12px">Vous recevrez la décision ici sans rechargement.</span></div> </div> </div>`;
+}
+
+function checkMyExc(){
+if(!EXCID)return;
+const exc=getExcs().find(e=>e.id===EXCID);
+if(!exc||exc.status===‘pending’)return;
+EXCID=null;
+if(exc.status===‘accepted’){toast(‘Exception acceptée par l'admin ! Continuez 👍’);showElig(true)}
+else{
+document.getElementById(‘mc’).innerHTML=` <div id="qv"> <div class="blkbox"> <div class="blkico">❌</div> <div class="blktitle">Exception refusée</div> <div class="blkreason">${exc.adminNote||"L'admin a refusé cette exception."}</div> <button class="btnrst" onclick="startQ()">↩ Nouveau prospect</button> </div> </div>`;
+}
+}
+
+function showElig(fromExc=false){
+const ch=QA.chauffage||’’;
+const prio=ch.includes(‘⭐’);
+document.getElementById(‘mc’).innerHTML=` <div class="eligbox"> <div class="eligico">${fromExc?'⚡':'✅'}</div> <div class="eligtitle">${fromExc?'Exception accordée — Prospect éligible !':'Prospect éligible !'}</div> <div class="eligsub">${prio?`⭐ Profil prioritaire — Chauffage : ${ch}`:'Dossier validé. Recherchez un créneau ci-dessous.'}</div> </div> <div class="spanel"> <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:18px">📍 Localisation du prospect</div> <div class="srow2"> <div class="sf"><label>Nom du prospect</label><input type="text" id="pName" placeholder="Ex: DUPONT Jean"></div> <div class="sf" style="max-width:130px"><label>Code postal</label><input type="text" id="pCP" placeholder="45000" maxlength="5"></div> <div class="sf"><label>Ville</label><input type="text" id="pVille" placeholder="Ex: ORLÉANS"></div> <button class="btnsrch" onclick="searchSlots()">Rechercher les créneaux</button> </div> </div> <div id="slotsArea"> <div class="statebox"><div class="stateico">📅</div><div class="statetitle">Saisissez la localisation pour voir les créneaux disponibles</div></div> </div>`;
+}
+
+// ═══════════════════════════════════════════
+// GOOGLE JWT AUTH
+// ═══════════════════════════════════════════
+let _tok=null,_tokExp=0;
+async function getToken(){
+if(_tok&&Date.now()<*tokExp-30000)return *tok;
+const now=Math.floor(Date.now()/1000);
+const enc=s=>btoa(JSON.stringify(s)).replace(/=/g,’’).replace(/+/g,’-’).replace(///g,’*’);
+const hdr=enc({alg:‘RS256’,typ:‘JWT’});
+const clm=enc({iss:SA_EMAIL,scope:‘https://www.googleapis.com/auth/spreadsheets’,aud:‘https://oauth2.googleapis.com/token’,exp:now+3600,iat:now});
+const unsigned=`${hdr}.${clm}`;
+const key=await importPK(SA_KEY);
+const sig=await crypto.subtle.sign({name:‘RSASSA-PKCS1-v1_5’},key,new TextEncoder().encode(unsigned));
+const b64=btoa(String.fromCharCode(…new Uint8Array(sig))).replace(/=/g,’’).replace(/+/g,’-’).replace(///g,’*’);
+const jwt=`${unsigned}.${b64}`;
+const res=await fetch(‘https://oauth2.googleapis.com/token’,{method:‘POST’,headers:{‘Content-Type’:‘application/x-www-form-urlencoded’},body:`grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`});
+const d=await res.json();
+if(!d.access_token)throw new Error(‘Auth Google échouée’);
+_tok=d.access_token;_tokExp=Date.now()+3500000;return _tok;
+}
+async function importPK(pem){
+const b64=pem.replace(/—–BEGIN PRIVATE KEY—–|—–END PRIVATE KEY—–|\n/g,’’);
+const bin=atob(b64);const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);
+return crypto.subtle.importKey(‘pkcs8’,b,{name:‘RSASSA-PKCS1-v1_5’,hash:‘SHA-256’},false,[‘sign’]);
+}
+
+// ═══════════════════════════════════════════
+// SHEET READ
+// ═══════════════════════════════════════════
+async function readSheet(){
+if(SCACHE&&Date.now()-SCACHE.ts<120000)return SCACHE.data;
+const tok=await getToken();
+const meta=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?includeGridData=false`,{headers:{Authorization:`Bearer ${tok}`}});
+const mj=await meta.json();
+const tabs=(mj.sheets||[]).map(s=>s.properties.title);
+// Pick most recent tab
+const tab=tabs[tabs.length-1]||tabs[0]||‘Sheet1’;
+const vr=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tab)}!A1:Z200`,{headers:{Authorization:`Bearer ${tok}`}});
+const vj=await vr.json();
+const parsed=parseSheet(vj.values||[],tab);
+SCACHE={data:parsed,ts:Date.now()};return parsed;
+}
+
+function parseSheet(rows,tabName){
+// Extract week start from tab name e.g. “13/04 AU 16/04”
+const m=tabName.match(/(\d+)/(\d+)/);
+const weekStart=m?new Date(new Date().getFullYear(),parseInt(m[2])-1,parseInt(m[1])):new Date();
+const techs=[];let cur=null;
+for(let r=0;r<rows.length;r++){
+const row=(rows[r]||[]).map(c=>(c||’’).trim());
+const nonEmpty=row.filter(c=>c);
+if(!nonEmpty.length)continue;
+// Detect tech header: row with 1-3 non-empty cells, all caps, no time pattern
+const hasTime=row.some(c=>/^\d{1,2}[Hh]\d{0,2}$/.test(c));
+const isHeader=!hasTime&&nonEmpty.length<=3&&nonEmpty.every(c=>/^[A-ZÀ-Ü\s-]{2,}$/.test(c));
+if(isHeader&&nonEmpty.length>=1){
+cur={name:nonEmpty[0],rdvs:[],tabName,weekStart};techs.push(cur);
+} else if(cur&&hasTime){
+const ti=row.findIndex(c=>/^\d{1,2}[Hh]\d{0,2}$/.test(c));
+if(ti>=0){
+const time=row[ti],client=row[ti+1]||’’,cp=row[ti+2]||’’,ville=row[ti+3]||’’,statut=row[ti+4]||’’;
+const [hh,mm]=(time.toUpperCase().replace(‘H’,’:’)+‘00’).split(’:’).map(Number);
+const tmin=hh*60+(mm||0);
+const nrpx=statut.toUpperCase().includes(‘NRPX’);
+const ok=statut.toUpperCase()===‘OK’;
+// Estimate day: group rows by blocks of ~10 = one day
+const dayOff=Math.floor(r/10)%5;
+const d=new Date(weekStart);d.setDate(d.getDate()+dayOff);
+cur.rdvs.push({time,tmin,client,cp,ville,statut,date:d,day:d.toLocaleDateString(‘fr-FR’,{weekday:‘long’,day:‘2-digit’,month:‘2-digit’}),dayKey:d.toDateString(),effectiveFree:nrpx&&tmin>=14*60,ok,nrpx,colStart:ti});
+}
+}
+}
+return{techs,tabName,weekStart};
+}
+
+// ═══════════════════════════════════════════
+// DISTANCE
+// ═══════════════════════════════════════════
+const DC={};
+async function travel(from,to){
+if(!from||!to)return 999;
+const key=`${from}||${to}`;
+if(DC[key]!==undefined)return DC[key];
+try{
+const url=`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(from)}&destinations=${encodeURIComponent(to)}&mode=driving&key=${MAPS_KEY}`;
+const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+const d=await r.json();
+const sec=d?.rows?.[0]?.elements?.[0]?.duration?.value;
+const min=sec?Math.ceil(sec/60):cpEstimate(from,to);
+DC[key]=min;return min;
+}catch{
+const est=cpEstimate(from,to);DC[key]=est;return est;
+}
+}
+function cpEstimate(a,b){
+const ca=parseInt((a.match(/\d{5}/)||[‘75’])[0].substring(0,2));
+const cb=parseInt((b.match(/\d{5}/)||[‘75’])[0].substring(0,2));
+return Math.min(Math.abs(ca-cb)*9+15,180);
+}
+
+// ═══════════════════════════════════════════
+// SLOT SEARCH
+// ═══════════════════════════════════════════
+async function searchSlots(){
+const pName=document.getElementById(‘pName’)?.value.trim()||’’;
+const pCP=document.getElementById(‘pCP’)?.value.trim();
+const pVille=document.getElementById(‘pVille’)?.value.trim();
+if(!pCP||!pVille){toast(‘Code postal et ville requis’,true);return}
+const area=document.getElementById(‘slotsArea’);
+area.innerHTML=`<div class="statebox"><div class="loader"></div><div class="statetitle">Chargement du planning…</div></div>`;
+try{
+const data=await readSheet();
+const slots=await findSlots(data,pCP,pVille);
+if(!slots.length){
+area.innerHTML=`<div class="statebox"><div class="stateico">😔</div><div class="statetitle">Aucun créneau disponible cette semaine</div><div style="font-size:13px;color:var(--text2);margin-top:6px">Essayez la semaine prochaine ou ajustez la zone.</div></div>`;
+return;
+}
+renderSlots(slots,pCP,pVille,pName);
+}catch(e){
+console.error(e);
+area.innerHTML=`<div class="statebox"><div class="stateico">⚠️</div><div class="statetitle">Erreur de connexion au planning</div><div style="font-size:13px;color:var(--text2);margin-top:6px">${e.message}</div></div>`;
+}
+}
+
+async function findSlots(data,cp,ville){
+const {techs}=data;const target=`${cp} ${ville} France`;
+const all=[];const today=new Date();today.setHours(0,0,0,0);
+
+for(const tech of techs){
+const byDay={};
+for(const rdv of tech.rdvs){
+if(rdv.effectiveFree)continue; // NRPX après 14h = libre
+if(!byDay[rdv.dayKey])byDay[rdv.dayKey]={rdvs:[],date:rdv.date,day:rdv.day};
+byDay[rdv.dayKey].rdvs.push(rdv);
+}
+const days=Object.values(byDay).filter(d=>d.date>=today).sort((a,b)=>a.date-b.date);
+
+```
+// Also add days with no RDV (techs free all day)
+// For simplicity we look at next 5 days
+for(let di=0;di<5;di++){
+  const d=new Date(today);d.setDate(d.getDate()+di);
+  const k=d.toDateString();
+  if(!byDay[k])days.push({rdvs:[],date:d,day:d.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'})});
+}
+const sortedDays=[...new Map(days.map(d=>[d.date.toDateString(),d])).values()].sort((a,b)=>a.date-b.date);
+
+for(const {rdvs,date,day} of sortedDays){
+  const sorted=rdvs.sort((a,b)=>a.tmin-b.tmin);
+
+  if(sorted.length===0){
+    // Full day free
+    all.push({tmin:DAY_START,day,date,tech:tech.name,rdvCount:0,prevCity:null,nextCity:null,travelPrev:0,travelNext:0,isFullDay:true});
+    continue;
+  }
+  // Before first RDV
+  const first=sorted[0];
+  const t1=await travel(target,`${first.cp} ${first.ville} France`);
+  if(t1<=MAX_TRAVEL&&DAY_START+VISIT+t1<=first.tmin){
+    all.push({tmin:DAY_START,day,date,tech:tech.name,rdvCount:sorted.length,prevCity:null,nextCity:first.ville,nextCP:first.cp,travelNext:t1});
+  }
+  // Between RDVs
+  for(let i=0;i<sorted.length-1;i++){
+    const prev=sorted[i],next=sorted[i+1];
+    const [tp,tn]=await Promise.all([travel(`${prev.cp} ${prev.ville} France`,target),travel(target,`${next.cp} ${next.ville} France`)]);
+    if(tp>MAX_TRAVEL||tn>MAX_TRAVEL)continue;
+    const start=prev.tmin+VISIT+tp;
+    const end=next.tmin-tn;
+    if(start<=end&&start<=DAY_END){
+      all.push({tmin:start,day,date,tech:tech.name,rdvCount:sorted.length,prevCity:prev.ville,prevCP:prev.cp,travelPrev:tp,nextCity:next.ville,nextCP:next.cp,travelNext:tn});
+    }
+  }
+  // After last RDV
+  const last=sorted[sorted.length-1];
+  const tl=await travel(`${last.cp} ${last.ville} France`,target);
+  const startAfter=last.tmin+VISIT+tl;
+  if(tl<=MAX_TRAVEL&&startAfter+VISIT<=DAY_END){
+    all.push({tmin:startAfter,day,date,tech:tech.name,rdvCount:sorted.length,prevCity:last.ville,prevCP:last.cp,travelPrev:tl,nextCity:null,travelNext:0});
+  }
+}
+```
+
+}
+
+// Sort: by date asc, then by rdvCount desc (prefer techs with more RDVs = denser planning), then by time
+all.sort((a,b)=>{
+const dd=a.date-b.date;if(dd!==0)return dd;
+if(b.rdvCount!==a.rdvCount)return b.rdvCount-a.rdvCount;
+return a.tmin-b.tmin;
+});
+return all.slice(0,15);
+}
+
+function m2t(m){const h=Math.floor(m/60);const mn=m%60;return`${h}H${mn.toString().padStart(2,'0')}`}
+
+function renderSlots(slots,cp,ville,pName){
+const area=document.getElementById(‘slotsArea’);
+let html=’’,lastDay=’’;
+for(const s of slots){
+if(s.day!==lastDay){
+const isToday=s.date.toDateString()===new Date().toDateString();
+const isTomorrow=s.date.toDateString()===new Date(Date.now()+86400000).toDateString();
+const lbl=isToday?`🔴 Aujourd'hui — ${s.day}`:isTomorrow?`🟡 Demain — ${s.day}`:s.day;
+html+=`<div class="dlbl">${lbl}</div>`;lastDay=s.day;
+}
+const tprev=s.travelPrev?`<span class="tpill ${s.travelPrev<=60?'tpok':'tpwarn'}">${s.travelPrev}min</span>`:’’;
+const tnext=s.travelNext?`<span class="tpill ${s.travelNext<=60?'tpok':'tpwarn'}">${s.travelNext}min</span>`:’’;
+const route=` ${s.prevCity?`<span class="slotcity">${s.prevCity}</span> ${tprev} <span>→</span>`:`<span style="color:var(--text3)">Début de journée →</span>`} <span class="slotcity" style="color:var(--accent)">${ville} (${cp})</span> ${s.nextCity?`<span>→</span> ${tnext} <span class="slotcity">${s.nextCity}</span>`:`<span style="color:var(--text3)">→ Fin de journée</span>`}`;
+html+=` <div class="slotcard"> <div class="slottop"> <div><div class="slottime">${m2t(s.tmin)}</div><div class="slotdlbl">${s.day}</div></div> <div class="slottech">👷 ${s.tech}</div> </div> <div class="slotroute">${route}</div> <div class="slotmeta"> <span>📦 ${s.rdvCount} RDV planifié${s.rdvCount>1?'s':''} ce jour</span> <span>📍 ${cp} ${ville}</span> ${s.rdvCount>=3?'<span style="color:var(--green)">✅ Planning optimisé</span>':''} </div> <button class="btnval" onclick="openConfirm('${s.tech}','${m2t(s.tmin)}','${cp}','${ville.replace(/'/g,"\\'")}','${pName.replace(/'/g,"\\'")}')">✓ Valider ce créneau</button> </div>`;
+}
+area.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+// CONFIRM & WRITE
+// ═══════════════════════════════════════════
+function openConfirm(tech,heure,cp,ville,pName){
+SLOT={tech,heure,cp,ville};
+document.getElementById(‘mClient’).value=pName||’’;
+document.getElementById(‘mHeure’).value=heure;
+document.getElementById(‘mCP’).value=cp;
+document.getElementById(‘mVille’).value=ville;
+document.getElementById(‘mTech’).value=tech;
+const lines=Object.entries(QA).map(([k,v])=>{const q=QS.find(q=>q.id===k);return q?`${q.label}: ${v}`:null}).filter(Boolean);
+document.getElementById(‘mElig’).value=lines.join(’\n’);
+document.getElementById(‘cModal’).classList.add(‘on’);
+}
+function closeMo(){document.getElementById(‘cModal’).classList.remove(‘on’)}
+
+async function confirmRDV(){
+const client=document.getElementById(‘mClient’).value.trim();
+if(!client){toast(‘Saisissez le nom du client’,true);return}
+const btn=document.getElementById(‘btnConfirm’);btn.disabled=true;btn.textContent=‘Enregistrement…’;
+try{
+await writeRDV(SLOT.tech,SLOT.heure,client,SLOT.cp,SLOT.ville);
+const users=getUsers();const idx=users.findIndex(u=>u.id===CU.id);
+if(idx>=0){users[idx].rdv++;saveUsers(users);CU.rdv=users[idx].rdv}
+addLog({type:‘rdv’,uid:CU.id,user:CU.name,txt:`<strong>${CU.name}</strong> a validé — <strong>${client}</strong> à ${SLOT.heure} / ${SLOT.ville} (${SLOT.tech})`});
+SCACHE=null;closeMo();toast(`RDV ${client} ajouté au planning ! ✅`);
+setTimeout(()=>showElig(),1800);
+}catch(e){toast(’Erreur : ’+e.message,true)}
+finally{btn.disabled=false;btn.textContent=‘Valider le RDV’}
+}
+
+async function writeRDV(tech,heure,client,cp,ville){
+const tok=await getToken();
+const tab=SCACHE?.data?.tabName||‘Sheet1’;
+// Read current data to find tech block
+const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tab)}!A1:Z200`,{headers:{Authorization:`Bearer ${tok}`}});
+const d=await r.json();const rows=d.values||[];
+// Find tech row
+let techRowIdx=-1,colStart=0;
+for(let i=0;i<rows.length;i++){
+const row=(rows[i]||[]).map(c=>(c||’’).trim());
+if(row.some(c=>c.toUpperCase()===tech.toUpperCase())){techRowIdx=i;colStart=row.findIndex(c=>c.toUpperCase()===tech.toUpperCase());if(colStart<0)colStart=0;break}
+}
+// Find first empty slot row after tech row
+let insertRow=techRowIdx+1;
+while(insertRow<rows.length){
+const row=rows[insertRow]||[];
+const hasContent=row.slice(colStart,colStart+5).some(c=>c&&c.trim());
+if(!hasContent)break;
+insertRow++;
+}
+const col=String.fromCharCode(65+colStart);
+const range=`${tab}!${col}${insertRow+1}`;
+const wr=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,{
+method:‘PUT’,headers:{Authorization:`Bearer ${tok}`,‘Content-Type’:‘application/json’},
+body:JSON.stringify({values:[[heure,client,cp,ville,‘OK’]]})
+});
+if(!wr.ok)throw new Error(‘Écriture Sheet échouée’);
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function toast(msg,err=false){
+const t=document.getElementById(‘toast’);
+t.textContent=msg;t.classList.toggle(‘err’,err);
+t.classList.add(‘on’);clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove(‘on’),3500);
+}
+</script>
+
+</body>
+</html>
