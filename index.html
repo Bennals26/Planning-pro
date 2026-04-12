@@ -253,7 +253,7 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
     <div class="lsub">Accédez à votre espace de travail</div>
     <div class="lf"><label>Identifiant</label><input id="lu" placeholder="votre.identifiant" autocomplete="username"></div>
     <div class="lf"><label>Mot de passe</label><input type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="btn-login" onclick="doLogin()" type="button" style="opacity:1;pointer-events:auto;-webkit-appearance:none;cursor:pointer">Se connecter →</button>
+    <div onclick="doLogin()" style="width:100%;padding:16px;border-radius:12px;background:linear-gradient(135deg,#3d8bff,#6c63ff);color:#fff;font-family:Outfit,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;text-align:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;" ontouchend="doLogin()">Se connecter →</div>
     <div class="lerr" id="lerr">Identifiant ou mot de passe incorrect.</div>
   </div>
 </div>
