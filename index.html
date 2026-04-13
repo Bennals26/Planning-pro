@@ -947,11 +947,25 @@ async function searchSlots(){
   area.innerHTML=`<div class="statebox"><div class="loader"></div><div class="statetitle">Chargement du planning…</div></div>`;
   try{
     const data=await readSheet();
+    
+    // DEBUG: show what was read
+    let debugHtml='<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;font-size:12px;font-family:monospace;">';
+    debugHtml+=`<div style="color:var(--accent);font-weight:700;margin-bottom:8px">📊 Debug — Onglet: ${data.tabName}</div>`;
+    debugHtml+=`<div style="color:var(--text2);margin-bottom:8px">Techniciens trouvés: ${data.techs.length}</div>`;
+    for(const t of data.techs){
+      debugHtml+=`<div style="color:var(--text);margin-bottom:4px">👷 <strong>${t.name}</strong> — ${t.day} — ${t.rdvs.length} RDV`;
+      if(t.rdvs.length>0) debugHtml+=': '+t.rdvs.map(r=>r.time+' '+r.ville).join(', ');
+      debugHtml+='</div>';
+    }
+    debugHtml+='</div>';
+    area.innerHTML=debugHtml;
+    
     const slots=await findSlots(data,pCP,pVille);
     if(!slots.length){
-      area.innerHTML=`<div class="statebox"><div class="stateico">😔</div><div class="statetitle">Aucun créneau disponible cette semaine</div><div style="font-size:13px;color:var(--text2);margin-top:6px">Essayez la semaine prochaine ou ajustez la zone.</div></div>`;
+      area.innerHTML=debugHtml+`<div class="statebox"><div class="stateico">😔</div><div class="statetitle">Aucun créneau disponible cette semaine</div><div style="font-size:13px;color:var(--text2);margin-top:6px">Essayez la semaine prochaine ou ajustez la zone.</div></div>`;
       return;
     }
+    area.innerHTML=debugHtml;
     renderSlots(slots,pCP,pVille,pName);
   }catch(e){
     console.error(e);
