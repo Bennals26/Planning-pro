@@ -752,8 +752,45 @@ async function readSheet(){
   const mj=await metaRes.json();
   const tabs=(mj.sheets||[]).map(s=>s.properties.title);
   
-  // Pick most recent tab (last one)
-  const tab=tabs[tabs.length-1]||tabs[0]||'Sheet1';
+  // Pick the tab that contains the current week
+  // Tab format: "13/04 AU 16/04" - find the one whose start date <= today <= end date
+  const today=new Date();
+  const yr=today.getFullYear();
+  
+  function parseTabDate(tabName){
+    const m=tabName.match(/(\d+)\/(\d+)/);
+    if(!m)return null;
+    return new Date(yr,parseInt(m[2])-1,parseInt(m[1]));
+  }
+  
+  let tab=tabs[0]||'Sheet1';
+  let bestDiff=Infinity;
+  
+  for(const t of tabs){
+    const d=parseTabDate(t);
+    if(!d)continue;
+    const diff=Math.abs(today-d);
+    // Prefer tab whose start date is closest to today (but not in the future by more than 7 days)
+    const daysDiff=(today-d)/(1000*60*60*24);
+    if(daysDiff>=-1 && daysDiff<=7){
+      // This tab's week contains today or is very close
+      if(diff<bestDiff){bestDiff=diff;tab=t;}
+    }
+  }
+  
+  // Fallback: if no tab found for current week, use the most recent past tab
+  if(bestDiff===Infinity){
+    let closest=null;let closestDiff=Infinity;
+    for(const t of tabs){
+      const d=parseTabDate(t);
+      if(!d)continue;
+      const diff=today-d;
+      if(diff>=0&&diff<closestDiff){closestDiff=diff;closest=t;}
+    }
+    if(closest)tab=closest;
+  }
+  
+  console.log('Selected tab:', tab, 'from tabs:', tabs);
   
   // Get values
   const valUrl=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tab)}!A1:Z300?key=${API_KEY}`;
