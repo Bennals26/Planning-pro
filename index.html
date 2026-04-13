@@ -921,65 +921,88 @@ async function searchSlots(){
 
 async function findSlots(data,cp,ville){
   const {techs}=data;const target=`${cp} ${ville} France`;
-  const all=[];const today=new Date();today.setHours(0,0,0,0);
+  const all=[];
+  const now=new Date();
+  const todayMidnight=new Date();todayMidnight.setHours(0,0,0,0);
+  const nowMin=now.getHours()*60+now.getMinutes()+30; // add 30min buffer
 
   for(const tech of techs){
     const byDay={};
     for(const rdv of tech.rdvs){
-      if(rdv.effectiveFree)continue; // NRPX après 14h = libre
+      if(rdv.effectiveFree)continue;
       if(!byDay[rdv.dayKey])byDay[rdv.dayKey]={rdvs:[],date:rdv.date,day:rdv.day};
       byDay[rdv.dayKey].rdvs.push(rdv);
     }
-    const days=Object.values(byDay).filter(d=>d.date>=today).sort((a,b)=>a.date-b.date);
 
-    // Also add days with no RDV (techs free all day)
-    // For simplicity we look at next 5 days
+    // Build list of Mon-Thu days for next 30 days
     for(let di=0;di<30;di++){
-      const d=new Date(today);d.setDate(d.getDate()+di);
-      const k=d.toDateString();
+      const d=new Date(todayMidnight);d.setDate(d.getDate()+di);
       const wd=d.getDay();
-      if(!byDay[k]&&wd>=1&&wd<=4)days.push({rdvs:[],date:d,day:d.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'})});
+      if(wd<1||wd>4)continue; // only Mon-Thu
+      const k=d.toDateString();
+      if(!byDay[k])byDay[k]={rdvs:[],date:d,day:d.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'})};
     }
-    const sortedDays=[...new Map(days.map(d=>[d.date.toDateString(),d])).values()]
-      .filter(d=>{const day=d.date.getDay();return day>=1&&day<=4;}) // Lundi=1 à Jeudi=4 seulement
+
+    const sortedDays=Object.values(byDay)
+      .filter(d=>{
+        const wd=d.date.getDay();
+        return wd>=1&&wd<=4&&d.date>=todayMidnight;
+      })
       .sort((a,b)=>a.date-b.date);
 
     for(const {rdvs,date,day} of sortedDays){
+      const isToday=date.toDateString()===todayMidnight.toDateString();
+      // Min start time: if today, use current time + 30min buffer, else DAY_START
+      const minStart=isToday?Math.max(DAY_START,nowMin):DAY_START;
+      if(minStart>=DAY_END)continue; // today is over
+
       const sorted=rdvs.sort((a,b)=>a.tmin-b.tmin);
 
       if(sorted.length===0){
-        // Full day free
-        all.push({tmin:DAY_START,day,date,tech:tech.name,rdvCount:0,prevCity:null,nextCity:null,travelPrev:0,travelNext:0,isFullDay:true});
+        // Free all day - propose multiple slots
+        const slots=[minStart, minStart+120, minStart+240].filter(t=>t+VISIT<=DAY_END);
+        for(const t of slots){
+          all.push({tmin:t,day,date,tech:tech.name,rdvCount:0,prevCity:null,nextCity:null,travelPrev:0,travelNext:0});
+        }
         continue;
       }
+
       // Before first RDV
       const first=sorted[0];
       const t1=await travel(target,`${first.cp} ${first.ville} France`);
-      if(t1<=MAX_TRAVEL&&DAY_START+VISIT+t1<=first.tmin){
-        all.push({tmin:DAY_START,day,date,tech:tech.name,rdvCount:sorted.length,prevCity:null,nextCity:first.ville,nextCP:first.cp,travelNext:t1});
+      const slotBefore=minStart+t1;
+      if(t1<=MAX_TRAVEL&&slotBefore+VISIT<=first.tmin&&slotBefore>=minStart){
+        all.push({tmin:slotBefore,day,date,tech:tech.name,rdvCount:sorted.length,prevCity:null,nextCity:first.ville,nextCP:first.cp,travelNext:t1});
       }
+
       // Between RDVs
       for(let i=0;i<sorted.length-1;i++){
         const prev=sorted[i],next=sorted[i+1];
-        const [tp,tn]=await Promise.all([travel(`${prev.cp} ${prev.ville} France`,target),travel(target,`${next.cp} ${next.ville} France`)]);
+        const [tp,tn]=await Promise.all([
+          travel(`${prev.cp} ${prev.ville} France`,target),
+          travel(target,`${next.cp} ${next.ville} France`)
+        ]);
         if(tp>MAX_TRAVEL||tn>MAX_TRAVEL)continue;
         const start=prev.tmin+VISIT+tp;
         const end=next.tmin-tn;
-        if(start<=end&&start<=DAY_END){
-          all.push({tmin:start,day,date,tech:tech.name,rdvCount:sorted.length,prevCity:prev.ville,prevCP:prev.cp,travelPrev:tp,nextCity:next.ville,nextCP:next.cp,travelNext:tn});
-        }
+        if(start<minStart||start>end||start>DAY_END)continue;
+        all.push({tmin:start,day,date,tech:tech.name,rdvCount:sorted.length,
+          prevCity:prev.ville,prevCP:prev.cp,travelPrev:tp,
+          nextCity:next.ville,nextCP:next.cp,travelNext:tn});
       }
+
       // After last RDV
       const last=sorted[sorted.length-1];
       const tl=await travel(`${last.cp} ${last.ville} France`,target);
-      const startAfter=last.tmin+VISIT+tl;
+      const startAfter=Math.max(last.tmin+VISIT+tl,minStart);
       if(tl<=MAX_TRAVEL&&startAfter+VISIT<=DAY_END){
-        all.push({tmin:startAfter,day,date,tech:tech.name,rdvCount:sorted.length,prevCity:last.ville,prevCP:last.cp,travelPrev:tl,nextCity:null,travelNext:0});
+        all.push({tmin:startAfter,day,date,tech:tech.name,rdvCount:sorted.length,
+          prevCity:last.ville,prevCP:last.cp,travelPrev:tl,nextCity:null,travelNext:0});
       }
     }
   }
 
-  // Sort: by date asc, then by rdvCount desc (prefer techs with more RDVs = denser planning), then by time
+  // Sort: by date, then prefer techs with most RDVs (denser planning), then by time
   all.sort((a,b)=>{
     const dd=a.date-b.date;if(dd!==0)return dd;
     if(b.rdvCount!==a.rdvCount)return b.rdvCount-a.rdvCount;
