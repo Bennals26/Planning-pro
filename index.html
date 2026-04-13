@@ -765,109 +765,149 @@ async function readSheet(){
 }
 
 function parseSheet(rows,tabName){
-  // Extract week start from tab name e.g. "13/04 AU 16/04"
-  const m=tabName.match(/(\d+)\/(\d+)/);
-  const yr=new Date().getFullYear();
-  const weekStart=m?new Date(yr,parseInt(m[2])-1,parseInt(m[1])):new Date();
+  // Sheet structure:
+  // - Each day has a header row (colored) with day name e.g. "lundi 13 avril"
+  // - Multiple technician blocks side by side (every 5-6 columns)
+  // - Each tech block: row with tech name, then RDV rows: Heure|Client|CP|Ville|Statut
+  // - Days are separated by header rows spanning multiple columns
 
-  const MONTHS={janvier:0,février:1,fevrier:1,mars:2,avril:3,mai:4,juin:5,
+  const yr = new Date().getFullYear();
+  const MONTHS = {janvier:0,février:1,fevrier:1,mars:2,avril:3,mai:4,juin:5,
     juillet:6,août:7,aout:7,septembre:8,octobre:9,novembre:10,décembre:11,decembre:11};
+  const DAY_FR = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
 
-  // Pass 1: find all day header rows and their dates
-  // Day header = row containing a day name (lundi, mardi...) and optionally a date
-  const dayHeaders=[]; // [{rowIdx, date}]
-  const DAY_NAMES=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
-  
-  for(let r=0;r<rows.length;r++){
-    const cells=(rows[r]||[]).map(c=>(c||'').trim());
-    const joined=cells.join(' ').toLowerCase();
-    for(let di=0;di<DAY_NAMES.length;di++){
-      if(joined.includes(DAY_NAMES[di])){
-        // Try to extract date from this row
-        const dateMatch=joined.match(/(\d{1,2})\s+(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)/);
+  // Step 1: Find all day header rows and their dates
+  const dayHeaders = []; // [{rowIdx, date, dateStr}]
+  for(let r = 0; r < rows.length; r++){
+    const cells = (rows[r]||[]).map(c=>(c||'').trim());
+    const joined = cells.join(' ').toLowerCase();
+    let found = false;
+    for(let di = 0; di < DAY_FR.length; di++){
+      if(joined.includes(DAY_FR[di])){
+        // Extract date
+        const dm = joined.match(/(\d{1,2})\s+(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)/);
         let date;
-        if(dateMatch){
-          const day=parseInt(dateMatch[1]);
-          const mon=MONTHS[dateMatch[2].replace('é','e').replace('û','u').replace('ô','o')]??0;
-          date=new Date(yr,mon,day);
+        if(dm){
+          const day = parseInt(dm[1]);
+          const mon = MONTHS[dm[2].replace(/[éè]/g,'e').replace(/[û]/g,'u')] ?? 3;
+          date = new Date(yr, mon, day);
         } else {
-          date=new Date(weekStart);
-          date.setDate(date.getDate()+di);
+          // fallback: use week start + day offset
+          const m = tabName.match(/(\d+)\/(\d+)/);
+          const ws = m ? new Date(yr, parseInt(m[2])-1, parseInt(m[1])) : new Date();
+          date = new Date(ws);
+          date.setDate(date.getDate() + di);
         }
-        dayHeaders.push({rowIdx:r,date});
+        dayHeaders.push({rowIdx: r, date, di});
+        found = true;
         break;
       }
     }
   }
 
-  // Helper: get current date for a given row index
-  function getDateForRow(r){
-    let date=weekStart;
-    for(const dh of dayHeaders){
-      if(dh.rowIdx<=r)date=dh.date;
-      else break;
-    }
-    return date;
-  }
+  console.log('Day headers found:', dayHeaders.map(d=>d.rowIdx+':'+d.date.toLocaleDateString('fr-FR')));
 
-  // Pass 2: parse tech blocks
-  // Tech header = row with a cell that is ALL CAPS (2-25 chars), no time, no digits leading
-  const IGNORE=['OK','NRPX','NRPX2','REPLACER','RDV DE SECOURS','SECOURS'];
-  const techs=[];
-  let cur=null;
+  // Step 2: For each day section, find technician columns and their RDVs
+  // A tech name row = row where cells contain ALL CAPS names, right after a day header
+  const IGNORE = new Set(['OK','NRPX','NRPX2','REPLACER','RDV DE SECOURS','SECOURS','ANNULE','RE SIGNE','VISITE']);
+  
+  // Map: techName+dateStr -> {name, rdvs, date, day}
+  const techMap = {};
 
-  for(let r=0;r<rows.length;r++){
-    const cells=(rows[r]||[]).map(c=>(c||'').trim());
-    const nonEmpty=cells.filter(c=>c);
-    if(!nonEmpty.length){continue;}
+  for(let hi = 0; hi < dayHeaders.length; hi++){
+    const {rowIdx: dayRow, date} = dayHeaders[hi];
+    const nextDayRow = hi+1 < dayHeaders.length ? dayHeaders[hi+1].rowIdx : rows.length;
+    const day = date.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'});
+    const dayKey = date.toDateString();
 
-    // Skip day header rows
-    if(dayHeaders.some(dh=>dh.rowIdx===r))continue;
-
-    const hasTime=cells.some(c=>/^\d{1,2}[Hh]\d{0,2}$/.test(c));
-
-    if(!hasTime){
-      // Look for tech name: ALL CAPS cell, 2-25 chars, letters only (French)
-      const nameCell=cells.find(c=>
-        c.length>=2&&c.length<=25&&
-        /^[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ][A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]*$/.test(c)&&
-        !IGNORE.includes(c.toUpperCase())&&
-        !/\d/.test(c)
-      );
-      if(nameCell){
-        // New tech block
-        cur={name:nameCell.trim(),rdvs:[],tabName,weekStart};
-        techs.push(cur);
-        continue;
+    // Find tech name rows between this day header and next
+    // Tech name row: has cells with ALL CAPS text (2+ chars), no time pattern
+    let techCols = []; // [{colIdx, name}]
+    
+    for(let r = dayRow+1; r < nextDayRow; r++){
+      const cells = (rows[r]||[]).map(c=>(c||'').trim());
+      const hasTime = cells.some(c=>/^\d{1,2}[Hh]\d{0,2}$/.test(c));
+      if(hasTime) continue;
+      
+      // Look for ALL CAPS names in each column
+      const newTechs = [];
+      for(let c = 0; c < cells.length; c++){
+        const cell = cells[c];
+        if(cell.length >= 2 && cell.length <= 25 &&
+           /^[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ][A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇ\s\-]*$/.test(cell) &&
+           !IGNORE.has(cell.toUpperCase()) &&
+           !/\d/.test(cell)){
+          newTechs.push({colIdx: c, name: cell.trim()});
+        }
+      }
+      if(newTechs.length > 0){
+        techCols = newTechs;
+        console.log('Tech cols for', day, ':', techCols.map(t=>t.colIdx+':'+t.name));
+        break;
       }
     }
 
-    // RDV row: has a time pattern
-    if(cur&&hasTime){
-      const ti=cells.findIndex(c=>/^\d{1,2}[Hh]\d{0,2}$/.test(c));
-      if(ti>=0){
-        const time=cells[ti];
-        const client=cells[ti+1]||'';
-        const cp=cells[ti+2]||'';
-        const ville=cells[ti+3]||'';
-        const statut=cells[ti+4]||'';
-        const [hh,mm]=(time.toUpperCase().replace('H',':')+'00').split(':').map(Number);
-        const tmin=(hh||0)*60+(mm||0);
-        const nrpx=statut.toUpperCase().includes('NRPX');
-        const date=getDateForRow(r);
-        const dayKey=date.toDateString();
-        const day=date.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'2-digit'});
-        // Skip if no useful data
-        if(!time||tmin===0)continue;
-        cur.rdvs.push({time,tmin,client,cp,ville,statut,date,day,dayKey,
-          effectiveFree:nrpx&&tmin>=14*60,
-          ok:statut.toUpperCase()==='OK',nrpx,colStart:ti});
+    if(techCols.length === 0) continue;
+
+    // Init tech entries
+    for(const tc of techCols){
+      const key = tc.name + '|' + dayKey;
+      if(!techMap[key]) techMap[key] = {name:tc.name, rdvs:[], date, day, dayKey, colIdx:tc.colIdx};
+    }
+
+    // Now parse RDV rows: rows with a time pattern
+    for(let r = dayRow+1; r < nextDayRow; r++){
+      const cells = (rows[r]||[]).map(c=>(c||'').trim());
+      const hasTime = cells.some(c=>/^\d{1,2}[Hh]\d{0,2}$/.test(c));
+      if(!hasTime) continue;
+
+      // For each tech column, check if this row has a time at or near their column
+      for(const tc of techCols){
+        // Search for time in a window of ±2 cols around tech's column
+        let timeCol = -1;
+        for(let dc = -1; dc <= 3; dc++){
+          const ci = tc.colIdx + dc;
+          if(ci >= 0 && ci < cells.length && /^\d{1,2}[Hh]\d{0,2}$/.test(cells[ci])){
+            timeCol = ci;
+            break;
+          }
+        }
+        if(timeCol < 0) continue;
+
+        const time = cells[timeCol];
+        const client = cells[timeCol+1]||'';
+        const cp = cells[timeCol+2]||'';
+        const ville = cells[timeCol+3]||'';
+        const statut = cells[timeCol+4]||'';
+        
+        if(!cp && !ville) continue; // skip empty rows
+
+        const parts = (time.toUpperCase().replace('H',':')+'00').split(':').map(Number);
+        const tmin = (parts[0]||0)*60 + (parts[1]||0);
+        if(tmin === 0) continue;
+
+        const nrpx = statut.toUpperCase().includes('NRPX');
+        const key = tc.name + '|' + dayKey;
+        
+        if(techMap[key]){
+          techMap[key].rdvs.push({
+            time, tmin, client, cp, ville, statut, date, day, dayKey,
+            effectiveFree: nrpx && tmin >= 14*60,
+            ok: statut.toUpperCase() === 'OK', nrpx
+          });
+        }
       }
     }
   }
 
-  console.log('Parsed techs:', techs.map(t=>t.name+':'+t.rdvs.length+'rdvs'));
-  return{techs,tabName,weekStart};
+  // Convert map to array of techs
+  const techs = Object.values(techMap);
+  console.log('Techs parsed:', techs.map(t=>t.name+'('+t.day+'):'+t.rdvs.length+'rdvs'));
+  
+  const m = tabName.match(/(\d+)\/(\d+)/);
+  const weekStart = m ? new Date(yr, parseInt(m[2])-1, parseInt(m[1])) : new Date();
+  
+  return {techs, tabName, weekStart};
 }
 
 // ═══════════════════════════════════════════
